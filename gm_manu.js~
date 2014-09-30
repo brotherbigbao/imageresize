@@ -1,0 +1,75 @@
+var fs = require('fs');
+var gm = require('gm');
+
+var root = '/home/liuyibao/images';
+
+console.log('Please input the path name:');
+process.stdin.resume();
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', function(data){
+    data = data.trim();
+    if(data.length == 0){
+        console.log('Error path name!');
+        process.exit(1);
+    }
+    
+    image_dir = root + '/' + data;
+    
+    fs.stat(image_dir, function(err, stat){
+        if(stat.isDirectory()){
+            console.log(image_dir+' is directory, start read images:');
+            fs.readdir(image_dir, function (err, images){
+                for(var i=0; i<images.length; i++){
+                    var image_path = image_dir+'/'+images[i];
+                    
+                    /* check image */
+                    (function(image_path){
+                        fs.stat(image_path, function(err, stat){
+                            if(stat.isFile()){
+                                //resize
+                                console.log("START: " + image_path);
+                                resize(image_path);
+                            }
+                        });
+                    })(image_path);
+                    /* check image */
+                }
+            });
+        }else{
+            console.log('the path is not exist!');
+            process.exit(1);
+        }
+    });
+});
+
+function resize(path){
+    var point = path.lastIndexOf(".");
+    var is_s1 = path.lastIndexOf("_s1");
+    var is_s2 = path.lastIndexOf("_s2");
+    var is_s3 = path.lastIndexOf("_s3");
+    if(point > -1 && is_s1 == -1 && is_s2 == -1 && is_s3 == -1){
+        var name = path.slice(0, point);
+        var ext = path.slice(point+1);
+        gm(path)
+        .options({imageMagick: true})
+        .resize(70)
+        .noProfile()
+        .write(name + '_s1' + '.' + ext, function (err) {
+          if (!err) console.log('done');
+        });
+        gm(path)
+        .options({imageMagick: true})
+        .resize(270)
+        .noProfile()
+        .write(name + '_s2' + '.' + ext, function (err) {
+          if (!err) console.log('done');
+        });
+        gm(path)
+        .options({imageMagick: true})
+        .resize(450)
+        .noProfile()
+        .write(name + '_s3' + '.' + ext, function (err) {
+          if (!err) console.log('done');
+        });
+    }
+}
